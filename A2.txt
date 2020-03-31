@@ -6,9 +6,8 @@ Created on Fri Mar 20 13:09:43 2020
 """
 ######Use l_b = 7.2 and l = 3.8       w2 = -0.4, w3 = 0.1.
 
-
-import math as mt
-import sympy as sp
+import time
+import numpy as np
 import scipy.optimize as sciop
 
 ##########################INPUT##########################
@@ -71,7 +70,7 @@ def Q_Summation(sequence_numeric):
         
         while n < m:
             q_n = sequence_numeric[n]
-            Q_inner_sum_temp = q_m*q_n*mt.sqrt(m-n)
+            Q_inner_sum_temp = q_m*q_n*np.sqrt(m-n)
             Q_inner_sum = Q_inner_sum + Q_inner_sum_temp
             n += 1
         
@@ -99,7 +98,7 @@ def O_Summation(N):
         
         while n < m:
             
-            O_inner_sum_temp = 1/mt.sqrt(m-n)
+            O_inner_sum_temp = 1/np.sqrt(m-n)
             O_inner_sum = O_inner_sum + O_inner_sum_temp
             n += 1
         
@@ -147,35 +146,87 @@ def B_Summation(N):
 
 
 
-##Calls Q_Summation, O_Summation, and B_Summation and caculates the first
-##through the fourth coefficients for the function, then generates the
-##function and returns it. This function is called by the Minimizer() 
-##function.      
-def Function(x, raw_input, N):
+
+def User_Input():
+    while_cond = True
+    
+    
+    while while_cond == True:
+        user_input = input("Input an initial guess:")
+        
+        
+        try:
+            float(user_input)
+            while_cond = False
+        except ValueError:
+            print("This is not a valid input, try again.")
+            
+    
+    return user_input
+        
+
+##Calls the summation functions and generates the four coefficients for
+##equation 2.
+##Called in Body
+def Constants(raw_input, N):
     sequence_numeric = sequence_numeric_value_parser(raw_input)
     Q_summation = Q_Summation(sequence_numeric)
     O_summation = O_Summation(N)
     B_summation = B_Summation(N)
     FiTC = 3/2 ##1st term constant
-    STC = ((3/(2*mt.pi))**(3/2))*O_summation ##2nd term constant
-    TTC = 0.1*((3/mt.pi)**3)*(1/16)*B_summation ##3rd term constant
-    FoTC = (7.2/3.8)*mt.sqrt(6/mt.pi)*Q_summation ##4th term constant
-    funct = FiTC*(x-sp.log(x)) + STC*x**(-3/2) + TTC*x**(-3) + FoTC*x**(-1/2)
-    print ("x = {} , funct = {}".format(x,funct))
+    STC = ((3/(2*np.pi))**(3/2))*O_summation ##2nd term constant
+    TTC = 0.1*((3/np.pi)**3)*(1/16)*B_summation ##3rd term constant
+    FoTC = (7.2/3.8)*np.sqrt(6/np.pi)*Q_summation ##4th term constant
+    return FiTC, STC, TTC, FoTC, Q_summation, O_summation, B_summation
+
+
+
+##Generates the mathematical function used by the Minimizer() function.     
+##Called by Minimizer()
+def Function(x, FiTC, STC, TTC, FoTC):
+    funct = FiTC*(x-np.log(x)) + STC*x**(-3/2) + TTC*x**(-3) + FoTC*x**(-1/2)
     return funct
 
 
 
-
-##Takes the results form the Function(x,raw_input,N) function and minimizes
-##it to find the lowest energy state.
-def Minimizer():
-    x = 1.0
-    result = sciop.minimize(Function, x, args=(raw_input, N))
-    print("Minima at: ")
-    print("x = {}, funct = {}".format(result.x, result.funct))
-    return
-    
+##Takes in coefficients calculated by the Constants() function [using the Q_Summation()
+##O_Summation(), and B_Summation() functions], and minimizes the
+##mathematical function
+##Called in Body
+def Minimizer(x, FiTC, STC, TTC, FoTC):
+    result = sciop.minimize(Function, x, args=(FiTC, STC, TTC, FoTC), method='SLSQP')
+    return result
 
 
-Minimizer()
+
+
+###################################BODY##############################
+
+cons = Constants(raw_input, N)
+FiTC = cons[0]
+STC = cons[1]
+TTC = cons[2]
+FoTC = cons[3]
+x = User_Input()
+result = Minimizer(x, FiTC, STC, TTC, FoTC)
+time.sleep(2)
+print( )
+print( )
+print("---------------Minimized Results--------------")
+print("The minimized value of the function is: " +str(result.fun))
+print("The corresponding x value is: " +str(result.x[0]))
+time.sleep(1)
+print( )
+print( )
+print("---------------Summation Values (Eqn. 3)--------------")
+print("The B summation is: " +str(cons[6]))
+print("The Omega Summation is: "+str(cons[5]))
+print("The Q Summation is: "+str(cons[4]))
+time.sleep(1)
+print( )
+print( )
+print("---------------Calculated Coefficients--------------")
+print("The first coefficient is: 3/2")
+print("The second coefficient is: " +str(cons[1]))
+print("The third coefficient is: "+str(cons[2]))
+print("The fourth coefficient is: "+str(cons[3]))
