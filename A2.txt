@@ -1,0 +1,181 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar 20 13:09:43 2020
+
+@author: Richard Miller
+"""
+######Use l_b = 7.2 and l = 3.8       w2 = -0.4, w3 = 0.1.
+
+
+import math as mt
+import sympy as sp
+import scipy.optimize as sciop
+
+##########################INPUT##########################
+raw_input = "MSETITVNCPTCGKTVVWGEISPFRPFCSKRCQLIDLGEWAAEEKRIPSSGDLSESDDWSEEPKQ"
+N = len(raw_input)
+
+##########################DEFINE FUNCTIONS###############
+
+##Takes input and returns the numeric value for each residue (e.g. +/-1 or 0)
+##Called by Function(x, raw_input, N)
+def sequence_numeric_value_parser(raw_input):
+    sequence_raw = []
+    sequence_numeric = []
+    
+    
+    i = 0
+    while i in range(N):
+        sequence_raw.append(str(raw_input[i]))
+        i += 1
+        
+        
+        
+    i = 0   
+    while i in range(N):
+        
+        
+        if sequence_raw[i] == 'E':
+            sequence_numeric.append(-1)
+            
+        elif sequence_raw[i] == 'D':
+            sequence_numeric.append(-1)
+            
+        elif sequence_raw[i] == 'R':
+            sequence_numeric.append(1)
+
+        elif sequence_raw[i] == 'K':
+            sequence_numeric.append(1)
+
+        else:
+            sequence_numeric.append(0)
+            
+            
+        i += 1
+    return sequence_numeric
+
+
+
+
+##Calculates the value of Q (SCD). Called by Function(x, raw_input, N)
+def Q_Summation(sequence_numeric):
+    Q_outer_sum = 0
+    m = 1 #Outer sum index.
+    
+    while m < N:
+        q_m = sequence_numeric[m]
+        n = 0
+        Q_inner_sum = 0
+        Q_inner_sum_temp = 0
+        
+        
+        while n < m:
+            q_n = sequence_numeric[n]
+            Q_inner_sum_temp = q_m*q_n*mt.sqrt(m-n)
+            Q_inner_sum = Q_inner_sum + Q_inner_sum_temp
+            n += 1
+        
+        
+        Q_outer_sum = Q_outer_sum + Q_inner_sum
+        m += 1
+    
+    Q_outer_sum_return = Q_outer_sum/N
+    return Q_outer_sum_return
+
+
+
+
+##Calculates OMEGA double sum. Called by Function(x, raw_input, N)
+def O_Summation(N):
+    O_summation_constant = -0.4/N
+    O_outer_sum = 0
+    m = 1
+    
+    while m < N:
+        n = 0
+        O_inner_sum = 0
+        O_inner_sum_temp = 0
+
+        
+        while n < m:
+            
+            O_inner_sum_temp = 1/mt.sqrt(m-n)
+            O_inner_sum = O_inner_sum + O_inner_sum_temp
+            n += 1
+        
+        
+        O_outer_sum = O_outer_sum + O_inner_sum
+        m += 1
+        
+    O_outer_sum_return = O_summation_constant*O_outer_sum
+    return O_outer_sum_return
+    
+
+
+
+##Calculates the B tripple sum. Called by Function(x, raw_input, N)
+def B_Summation(N):
+    p = 3
+    B_outer_sum = 0
+    
+    
+    while p < N:
+        B_middle_sum = 0
+        m = 2
+        
+        while m < (p-1):
+            B_sum_temp = 0
+            B_inner_sum = 0
+            n = 2
+            
+            
+            while n < (m - 1):
+                B_sum_temp = (p - n)/((p-m)*(m-n))**(3/2)
+                B_inner_sum = B_inner_sum + B_sum_temp
+                n += 1
+                
+                
+            B_middle_sum = B_middle_sum + B_inner_sum
+            m += 1
+            
+            
+        B_outer_sum = B_outer_sum + B_middle_sum
+        p += 1
+        
+    B_outer_sum_return =  B_outer_sum/N
+    return B_outer_sum_return
+
+
+
+##Calls Q_Summation, O_Summation, and B_Summation and caculates the first
+##through the fourth coefficients for the function, then generates the
+##function and returns it. This function is called by the Minimizer() 
+##function.      
+def Function(x, raw_input, N):
+    sequence_numeric = sequence_numeric_value_parser(raw_input)
+    Q_summation = Q_Summation(sequence_numeric)
+    O_summation = O_Summation(N)
+    B_summation = B_Summation(N)
+    FiTC = 3/2 ##1st term constant
+    STC = ((3/(2*mt.pi))**(3/2))*O_summation ##2nd term constant
+    TTC = 0.1*((3/mt.pi)**3)*(1/16)*B_summation ##3rd term constant
+    FoTC = (7.2/3.8)*mt.sqrt(6/mt.pi)*Q_summation ##4th term constant
+    funct = FiTC*(x-sp.log(x)) + STC*x**(-3/2) + TTC*x**(-3) + FoTC*x**(-1/2)
+    print ("x = {} , funct = {}".format(x,funct))
+    return funct
+
+
+
+
+##Takes the results form the Function(x,raw_input,N) function and minimizes
+##it to find the lowest energy state.
+def Minimizer():
+    x = 1.0
+    result = sciop.minimize(Function, x, args=(raw_input, N))
+    print("Minima at: ")
+    print("x = {}, funct = {}".format(result.x, result.funct))
+    return
+    
+
+
+Minimizer()
