@@ -88,15 +88,15 @@ def Q_Summation(sequence_numeric):
 def O_Summation(N):
     O_summation_constant = -0.4/N
     O_outer_sum = 0
-    m = 1
+    m = 2
     
-    while m < N:
-        n = 0
+    while m <= N:
+        n = 1
         O_inner_sum = 0
         O_inner_sum_temp = 0
 
         
-        while n < m:
+        while n <= (m - 1):
             
             O_inner_sum_temp = 1/np.sqrt(m-n)
             O_inner_sum = O_inner_sum + O_inner_sum_temp
@@ -104,11 +104,10 @@ def O_Summation(N):
         
         
         O_outer_sum = O_outer_sum + O_inner_sum
-        m += 1
+        m += 1  
         
     O_outer_sum_return = O_summation_constant*O_outer_sum
-    return O_outer_sum_return
-    
+    return O_outer_sum_return    
 
 
 
@@ -118,17 +117,17 @@ def B_Summation(N):
     B_outer_sum = 0
     
     
-    while p < N:
+    while p <= N:
         B_middle_sum = 0
         m = 2
         
-        while m < (p-1):
+        while m <= (p-1):
             B_sum_temp = 0
             B_inner_sum = 0
-            n = 2
+            n = 1
             
             
-            while n < (m - 1):
+            while n <= (m - 1):
                 B_sum_temp = (p - n)/((p-m)*(m-n))**(3/2)
                 B_inner_sum = B_inner_sum + B_sum_temp
                 n += 1
